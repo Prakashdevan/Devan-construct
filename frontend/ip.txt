@@ -1,0 +1,34 @@
+
+Windows IP Configuration
+
+
+Unknown adapter McAfee VPN:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Wireless LAN adapter Local Area Connection* 1:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Wireless LAN adapter Local Area Connection* 2:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Wireless LAN adapter Wi-Fi:
+
+   Connection-specific DNS Suffix  . : 
+   IPv6 Address. . . . . . . . . . . : 2409:408d:5eb3:5752:d09e:e896:a908:7e7
+   Temporary IPv6 Address. . . . . . : 2409:408d:5eb3:5752:1c56:1d14:6a2:d26a
+   Link-local IPv6 Address . . . . . : fe80::6c51:e715:852b:a98%18
+   IPv4 Address. . . . . . . . . . . : 10.85.171.77
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : fe80::c0df:a3ff:fe3e:7cdc%18
+                                       10.85.171.71
+
+Ethernet adapter Bluetooth Network Connection:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 

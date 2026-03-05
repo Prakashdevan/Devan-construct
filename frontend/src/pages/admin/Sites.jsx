@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import { MapPin, Calendar, CheckCircle2, Clock, Plus, X, Edit2, Trash2 } from 'lucide-react';
 
 const Sites = () => {
@@ -24,10 +24,7 @@ const Sites = () => {
     const fetchSites = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/sites', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await API.get('/api/sites');
             setSites(res.data);
         } catch (err) {
             console.error('Error fetching sites', err);
@@ -46,12 +43,10 @@ const Sites = () => {
         e.preventDefault();
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { 'Authorization': `Bearer ${token}` } };
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/sites/${currentSiteId}`, formData, config);
+                await API.put(`/api/sites/${currentSiteId}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/sites', formData, config);
+                await API.post('/api/sites', formData);
             }
             setShowModal(false);
             resetForm();
@@ -65,14 +60,7 @@ const Sites = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this site?')) {
             try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    alert('Session expired. Please login again.');
-                    return;
-                }
-                await axios.delete(`http://localhost:5000/api/sites/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                await API.delete(`/api/sites/${id}`);
                 fetchSites();
                 alert('Site deleted successfully!');
             } catch (err) {
@@ -225,6 +213,17 @@ const Sites = () => {
                 .form-group label { font-weight: 700; font-size: 0.9rem; }
                 .form-group input, .form-group select { padding: 0.9rem; border-radius: 12px; border: 1px solid #eee; }
                 .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+                
+                @media (max-width: 992px) {
+                    .page-actions { justify-content: stretch; padding: 1rem; }
+                    .btn-primary { width: 100%; justify-content: center; padding: 1rem; }
+                    .sites-grid { grid-template-columns: 1fr; padding: 0 1rem 2rem; }
+                    .site-card { padding: 1.5rem; border-radius: 20px; }
+                    .site-header h3 { font-size: 1.1rem; }
+                    .modal-content { padding: 1.5rem; margin: 1rem; border-radius: 24px; }
+                    .modal-footer { flex-direction: column-reverse; }
+                    .modal-footer .btn { width: 100%; justify-content: center; }
+                }
             `}} />
         </div>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 import { useLanguage } from '../context/LanguageContext';
 
 const Gallery = () => {
@@ -13,7 +13,7 @@ const Gallery = () => {
 
     const fetchImages = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/gallery');
+            const res = await API.get('/api/gallery');
             setImages(res.data);
         } catch (err) {
             console.error('Error fetching gallery', err);
@@ -54,24 +54,24 @@ const Gallery = () => {
 
             <style dangerouslySetInnerHTML={{
                 __html: `
-        .gallery-page { padding: 4rem 5%; max-width: 1200px; margin: 0 auto; }
+        .gallery-page { padding: 4rem 5 %; max-width: 1200px; margin: 0 auto; }
         .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
         .gallery-item { position: relative; border-radius: 20px; overflow: hidden; height: 300px; border: 1px solid #eee; }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
         .gallery-item:hover img { transform: scale(1.1); }
         .img-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          padding: 1.5rem;
-          background: linear-gradient(transparent, rgba(0,0,0,0.8));
-          color: white;
-          opacity: 0;
-          transition: opacity 0.3s;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .gallery-item:hover .img-overlay { opacity: 1; }
-        
+
         @media (max-width: 992px) {
           .gallery-grid { grid-template-columns: repeat(2, 1fr); }
         }

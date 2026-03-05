@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import {
     ResponsiveContainer,
     BarChart,
@@ -36,16 +36,15 @@ const Overview = () => {
     const fetchDashboardData = async () => {
         if (!token) return;
         setLoading(true);
-        const config = { headers: { Authorization: `Bearer ${token}` } };
 
         try {
             console.log('Fetching dashboard data...');
             const [workersRes, sitesRes, attendanceStatsRes, specRes, wageRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/workers', config).catch(() => ({ data: [] })),
-                axios.get('http://localhost:5000/api/sites', config).catch(() => ({ data: [] })),
-                axios.get('http://localhost:5000/api/attendance/stats', config).catch(() => ({ data: [] })),
-                axios.get('http://localhost:5000/api/workers/stats/specialization', config).catch(() => ({ data: [] })),
-                axios.get('http://localhost:5000/api/attendance/daily-expense', config).catch(() => ({ data: { presentCount: 0 } }))
+                API.get('/api/workers').catch(() => ({ data: [] })),
+                API.get('/api/sites').catch(() => ({ data: [] })),
+                API.get('/api/attendance/stats').catch(() => ({ data: [] })),
+                API.get('/api/workers/stats/specialization').catch(() => ({ data: [] })),
+                API.get('/api/attendance/daily-expense').catch(() => ({ data: { presentCount: 0 } }))
             ]);
 
             console.log('Backend Data Loaded:', {
@@ -88,8 +87,7 @@ const Overview = () => {
         setSelectedDate(data.name);
         setDetailsLoading(true);
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const res = await axios.get(`http://localhost:5000/api/attendance/day-details/${data.name}`, config);
+            const res = await API.get(`/api/attendance/day-details/${data.name}`);
             setDayDetails(res.data);
         } catch (err) {
             console.error('Error fetching day details', err);
@@ -106,30 +104,16 @@ const Overview = () => {
 
     return (
         <div className="overview-container">
-            <div style={{
-                marginBottom: '2.5rem',
-                background: 'white',
-                padding: '2rem',
-                borderRadius: '24px',
-                boxShadow: 'var(--shadow)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: '1px solid rgba(0,0,0,0.03)'
-            }}>
-                <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#1a1a1a', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+            <div className="welcome-banner glass-effect">
+                <div className="welcome-text">
+                    <h1 className="welcome-title">
                         Welcome back, <span style={{ color: 'var(--accent)' }}>Admin</span>
                     </h1>
-                    <p style={{ color: '#666', fontSize: '1rem', fontWeight: 500 }}>
-                        Monitoring Devan Construction's performance.
-                    </p>
+                    <p>Monitoring Devan Construction's performance.</p>
                 </div>
-                <div style={{ textAlign: 'right', background: '#f8f9fa', padding: '12px 20px', borderRadius: '15px' }}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>
-                        Today's Overview
-                    </p>
-                    <p style={{ fontSize: '1rem', fontWeight: 700, color: '#333' }}>
+                <div className="today-badge">
+                    <p className="badge-label">Today's Overview</p>
+                    <p className="badge-date">
                         {new Date().toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </p>
                 </div>
@@ -259,9 +243,23 @@ const Overview = () => {
             <style dangerouslySetInnerHTML={{
                 __html: `
         .overview-container { animation: fadeIn 0.5s ease-out; padding-bottom: 2rem; }
-        .welcome-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
-        .welcome-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .welcome-header p { color: #666; font-size: 1.1rem; }
+        .welcome-banner { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 2.5rem; 
+            border-radius: 30px; 
+            background: white; 
+            margin-bottom: 2.5rem; 
+            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+        .welcome-title { font-size: 2.2rem; font-weight: 900; color: #1a1a1a; margin: 0 0 8px; letter-spacing: -1px; }
+        .welcome-text p { color: #666; font-size: 1.1rem; font-weight: 500; margin: 0; }
+        
+        .today-badge { text-align: right; background: #f8f9fa; padding: 15px 25px; border-radius: 20px; border: 1px solid #f0f0f0; }
+        .badge-label { font-size: 0.75rem; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 4px; }
+        .badge-date { font-size: 1.1rem; font-weight: 700; color: #333; margin: 0; }
 
         .refresh-btn { display: flex; align-items: center; gap: 8px; padding: 0.8rem 1.2rem; border-radius: 12px; font-weight: 700; transition: all 0.3s; background: #fff; border: 1px solid #ddd; cursor: pointer; }
         .refresh-btn:hover:not(:disabled) { background: #f0f0f0; transform: translateY(-1px); }
@@ -313,10 +311,16 @@ const Overview = () => {
           .stats-container { grid-template-columns: repeat(2, 1fr); }
           .charts-mock-row { grid-template-columns: 1fr; }
         }
-        @media (max-width: 600px) {
-          .stats-container { grid-template-columns: 1fr; }
-          .welcome-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+
+        @media (max-width: 768px) {
+          .welcome-banner { flex-direction: column; align-items: stretch; text-align: center; gap: 1.5rem; padding: 2rem; }
+          .today-badge { text-align: center; }
+          .welcome-title { font-size: 1.8rem; }
+          .stats-container { grid-template-columns: 1fr; gap: 1rem; }
+          .chart-card { padding: 1.2rem; min-height: auto; }
+          .chart-wrapper { height: 250px; }
           .names-grid { grid-template-columns: 1fr; }
+          .details-modal { padding: 1.5rem; border-radius: 24px; }
         }
         .overview-container { animation: slideUp 0.6s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

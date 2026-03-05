@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Download, FileText, Calendar, Users, IndianRupee, ChevronDown, ChevronUp, FileCode, AlertTriangle, RefreshCw, X } from 'lucide-react';
@@ -36,10 +36,7 @@ const Reports = () => {
 
     const fetchPayouts = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/attendance/payouts', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await API.get('/api/attendance/payouts');
             setPayoutDates(res.data);
         } catch (err) {
             console.error('Error fetching payouts', err);
@@ -56,14 +53,11 @@ const Reports = () => {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem('token');
-            let url = `http://localhost:5000/api/attendance/worker-salary`;
+            let url = `/api/attendance/worker-salary`;
             if (selectedPayout) {
                 url += `?payoutDate=${encodeURIComponent(selectedPayout)}`;
             }
-            const res = await axios.get(url, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await API.get(url);
             setSalaryData(res.data);
         } catch (err) {
             console.error('Error fetching salary report', err);
@@ -77,10 +71,8 @@ const Reports = () => {
         e.preventDefault();
         setResetLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/attendance/reset',
-                { password: resetPassword },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await API.post('/api/attendance/reset',
+                { password: resetPassword }
             );
             alert('Salary cycle reset successfully! All records archived.');
             setResetPassword('');
@@ -171,7 +163,7 @@ const Reports = () => {
         if (!window.confirm(`Are you sure you want to PERMANENTLY remove the attendance for ${new Date(date).toLocaleDateString()}? This will update the salary total.`)) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/attendance/${workerId}/${date}`);
+            await API.delete(`/api/attendance/${workerId}/${date}`);
             fetchSalaryReport(); // Refresh the report data
             alert('Attendance record removed and salary updated.');
         } catch (err) {
@@ -240,7 +232,8 @@ const Reports = () => {
                 </div>
             </div>
 
-            <div className="salary-table-container table-container glass-effect">
+            {/* Desktop Table View */}
+            <div className="salary-table-container desktop-only glass-effect">
                 {error && <div className="error-banner"><AlertTriangle size={18} /> {error}</div>}
                 <table>
                     <thead>
@@ -326,6 +319,69 @@ const Reports = () => {
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="report-cards mobile-only">
+                {loading ? (
+                    <div className="loading">Loading reports...</div>
+                ) : viewTab === 'history' && !selectedPayout ? (
+                    <div className="empty-state">Please select a payout date</div>
+                ) : salaryData.length === 0 ? (
+                    <div className="empty-state">No records found</div>
+                ) : (
+                    salaryData.map((worker, idx) => (
+                        <div key={idx} className="report-card glass-effect">
+                            <div className="card-header" onClick={() => setExpandedWorker(expandedWorker === idx ? null : idx)}>
+                                <div className="worker-main">
+                                    <span className="worker-name">{worker.name}</span>
+                                    <span className="worker-spec">{worker.specialization}</span>
+                                </div>
+                                <div className="card-right">
+                                    <span className="worker-total">₹{worker.totalSalary.toLocaleString('en-IN')}</span>
+                                    {expandedWorker === idx ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                </div>
+                            </div>
+
+                            <div className="card-summary-grid">
+                                <div className="summary-item">
+                                    <span className="sum-label">P</span>
+                                    <span className="sum-val present">{worker.presentDays}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="sum-label">H</span>
+                                    <span className="sum-val half">{worker.halfDays}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="sum-label">1.5</span>
+                                    <span className="sum-val one-half">{worker.oneHalfDays || 0}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="sum-label">A</span>
+                                    <span className="sum-val absent">{worker.absentDays}</span>
+                                </div>
+                            </div>
+
+                            {expandedWorker === idx && (
+                                <div className="card-expanded-content">
+                                    <h6>Detail Breakdown:</h6>
+                                    <div className="mobile-details-list">
+                                        {worker.attendanceDetails.sort((a, b) => new Date(a.date) - new Date(b.date)).map((detail, dIdx) => (
+                                            <div key={dIdx} className="mobile-detail-row">
+                                                <span className="d-date">{formatDate(detail.date)}</span>
+                                                <span className={`d-status ${detail.status.toLowerCase()}`}>{detail.status}</span>
+                                                <span className="d-earned">₹{detail.status === 'One-and-half' ? worker.dailyWage * 1.5 : (detail.status === 'Present' ? worker.dailyWage : detail.status === 'Half-day' ? worker.dailyWage / 2 : 0)}</span>
+                                                <button className="d-delete" onClick={() => handleDeleteAttendance(worker.workerId || worker._id, detail.date)}>
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
+
             {/* Reset Modal */}
             {showResetModal && (
                 <div className="modal-overlay">
@@ -358,6 +414,50 @@ const Reports = () => {
 
             <style dangerouslySetInnerHTML={{
                 __html: `
+        .desktop-only { display: block; }
+        .mobile-only { display: none; }
+
+        @media (max-width: 992px) {
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+
+            .reports-controls { flex-direction: column; padding: 1rem; align-items: stretch; gap: 1rem; }
+            .summary-payout { margin: 0; text-align: left; background: #e6fffa; padding: 1rem; border-radius: 15px; }
+            .summary-payout .value { font-size: 1.5rem; }
+            .button-group { display: grid; grid-template-columns: 1fr; gap: 10px; }
+            .download-btn, .reset-btn { width: 100%; justify-content: center; }
+
+            .report-cards { display: flex; flex-direction: column; gap: 1rem; padding: 0 1rem 2rem; }
+            .report-card { padding: 1.2rem; border-radius: 20px; background: white; border: 1px solid #eee; display: flex; flex-direction: column; gap: 1rem; }
+            
+            .card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+            .worker-main { display: flex; flex-direction: column; }
+            .worker-name { font-weight: 800; color: var(--primary); font-size: 1.05rem; }
+            .worker-spec { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 700; }
+            .card-right { display: flex; align-items: center; gap: 8px; }
+            .worker-total { font-weight: 900; color: var(--primary); font-size: 1.1rem; }
+            
+            .card-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .summary-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fcfcfc; border-radius: 12px; border: 1px solid #f5f5f5; }
+            .sum-label { font-size: 0.65rem; color: #888; font-weight: 800; }
+            .sum-val { font-weight: 800; font-size: 0.9rem; }
+            
+            .card-expanded-content { border-top: 1px solid #f0f0f0; padding-top: 1rem; }
+            .card-expanded-content h6 { margin: 0 0 0.8rem; font-size: 0.8rem; text-transform: uppercase; color: #888; }
+            .mobile-details-list { display: flex; flex-direction: column; gap: 8px; }
+            .mobile-detail-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 40px; align-items: center; padding: 10px; background: #f9f9f9; border-radius: 10px; font-size: 0.85rem; }
+            .d-date { font-weight: 700; }
+            .d-status { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+            .d-status.present { color: #33d391; }
+            .d-status.half-day { color: #ffb400; }
+            .d-status.absent { color: #ff4d4f; }
+            .d-earned { font-weight: 800; color: #33d391; text-align: right; }
+            .d-delete { background: none; border: none; color: #ff4d4f; }
+
+            .reports-tabs { width: 100%; border-radius: 20px 20px 0 0; }
+            .tab-btn { flex: 1; justify-content: center; }
+        }
+
         .reports-controls { display: flex; gap: 2rem; padding: 1.5rem 2rem; border-radius: 0 0 20px 20px; margin-bottom: 2rem; align-items: flex-end; position: relative; border-top: none; }
         .reports-tabs { display: flex; gap: 5px; background: rgba(0,0,0,0.03); padding: 5px; border-radius: 15px 15px 0 0; width: fit-content; margin-bottom: -1px; }
         .tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: none; background: none; cursor: pointer; border-radius: 10px; font-weight: 700; color: #888; transition: all 0.2s; }

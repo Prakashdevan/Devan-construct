@@ -63,7 +63,7 @@ const Navbar = () => {
   const isAboutActive = location.pathname === '/' && activeTab === 'about';
 
   return (
-    <nav className="navbar glass-effect fixed-nav">
+    <nav className={`navbar glass-effect fixed-nav ${isOpen ? 'mobile-nav-open' : ''}`}>
       <div className="nav-content">
         <Link to="/" className="logo" onClick={(e) => scrollToTop(e)}>
           <img src="/favicon.png" alt="DEVAN" className="logo-img" />
@@ -167,6 +167,22 @@ const Navbar = () => {
           <NavLink to="/gallery" onClick={() => setIsOpen(false)}>{t('nav.gallery')}</NavLink>
           <NavLink to="/contact" onClick={() => setIsOpen(false)}>{t('nav.contact')}</NavLink>
           <NavLink to="/login" onClick={() => setIsOpen(false)} className="mobile-login-btn">{t('nav.admin')}</NavLink>
+
+          <div className="mobile-lang-section">
+            <p className="mobile-lang-title">{t('common.language') || 'Language'}</p>
+            <div className="mobile-lang-grid">
+              {languages.map(lang => (
+                <button
+                  key={lang.code}
+                  className={`mobile-lang-item ${currentLang === lang.code ? 'active' : ''}`}
+                  onClick={() => handleLangChange(lang.code)}
+                >
+                  <span className="native">{lang.native}</span>
+                  <span className="label">{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -200,7 +216,7 @@ const Navbar = () => {
         }
         .logo-img { width: 34px; height: 34px; object-fit: contain; border-radius: 4px; }
         .logo-text { display: flex; flex-direction: column; line-height: 1; }
-        .logo-text span { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
+        .logo-text span { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; transition: color 0.3s; }
         .logo-text small { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-light); }
         
         .nav-links { display: flex; align-items: center; gap: 30px; }
@@ -270,15 +286,64 @@ const Navbar = () => {
           top: 80px;
           left: 0;
           right: 0;
+          bottom: 0;
           padding: 2rem;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
           text-align: center;
+          background: var(--primary) !important;
           animation: slideInDown 0.3s ease-out;
+          overflow-y: auto;
+          box-shadow: none;
         }
-        .mobile-menu a { text-decoration: none; color: var(--primary); font-size: 1.2rem; font-weight: 600; }
+        .mobile-menu a { text-decoration: none; color: white; font-size: 1.3rem; font-weight: 700; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .mobile-menu a:last-child { border-bottom: none; }
         .mobile-menu a.active { color: var(--accent) !important; }
+
+        .mobile-lang-section {
+          margin-top: 1rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-lang-title {
+          color: rgba(255,255,255,0.5);
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 1rem;
+          font-weight: 600;
+        }
+        .mobile-lang-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .mobile-lang-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: white;
+          padding: 8px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .mobile-lang-item .native {
+          font-weight: 700;
+          font-size: 1rem;
+        }
+        .mobile-lang-item .label {
+          font-size: 0.7rem;
+          opacity: 0.6;
+        }
+        .mobile-lang-item.active {
+          background: var(--accent);
+          color: var(--primary);
+          border-color: var(--accent);
+        }
 
         @keyframes slideInDown {
           from { transform: translateY(-10px); opacity: 0; }
@@ -288,6 +353,18 @@ const Navbar = () => {
         @media (max-width: 992px) {
           .nav-links { display: none; }
           .mobile-toggle { display: block; }
+
+          /* Background color only when menu is open */
+          .navbar.mobile-nav-open {
+            background: var(--primary) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-bottom: none;
+          }
+          .navbar.mobile-nav-open .logo-text span,
+          .navbar.mobile-nav-open .mobile-toggle { 
+            color: white !important; 
+          }
         }
       `}} />
     </nav>

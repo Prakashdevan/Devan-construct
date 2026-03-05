@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 
 const GalleryManager = () => {
-    const { token } = useAuth();
     const [images, setImages] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [file, setFile] = useState(null);
@@ -16,9 +14,7 @@ const GalleryManager = () => {
 
     const fetchImages = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/gallery', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await API.get('/api/gallery');
             setImages(res.data);
         } catch (err) {
             console.error('Error fetching gallery', err);
@@ -35,10 +31,9 @@ const GalleryManager = () => {
 
         setUploading(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/gallery/upload', formData, {
+            const res = await API.post('/api/gallery/upload', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'multipart/form-data'
                 }
             });
             setImages([res.data, ...images]);
@@ -56,9 +51,7 @@ const GalleryManager = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this photo?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/gallery/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await API.delete(`/api/gallery/${id}`);
             setImages(images.filter(img => img._id !== id));
         } catch (err) {
             console.error('Delete failed', err);
@@ -151,6 +144,14 @@ const GalleryManager = () => {
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 4rem; color: #888; font-style: italic; }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        @media (max-width: 992px) {
+            .upload-section { padding: 2rem 1rem; border-radius: 20px; margin: 1rem; }
+            .form-inputs { max-width: none; width: 100%; }
+            .gallery-admin-grid { grid-template-columns: 1fr; padding: 0 1rem 2rem; }
+            .gallery-admin-item { height: 250px; border-radius: 24px; }
+            .btn-secondary { width: 100%; justify-content: center; padding: 1rem; }
+        }
       `}} />
         </div>
     );

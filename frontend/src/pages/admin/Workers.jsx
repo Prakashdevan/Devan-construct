@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import { Plus, Search, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -37,10 +37,9 @@ const Workers = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             const [workersRes, sitesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/workers?all=true', config),
-                axios.get('http://localhost:5000/api/sites', config)
+                API.get('/api/workers?all=true'),
+                API.get('/api/sites')
             ]);
             setWorkers(workersRes.data);
             setSites(sitesRes.data);
@@ -64,11 +63,10 @@ const Workers = () => {
         e.preventDefault();
         setError('');
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/workers/${currentWorkerId}`, formData, config);
+                await API.put(`/api/workers/${currentWorkerId}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/workers', formData, config);
+                await API.post('/api/workers', formData);
             }
             setShowModal(false);
             resetForm();
@@ -96,8 +94,7 @@ const Workers = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this worker?')) return;
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            await axios.delete(`http://localhost:5000/api/workers/${id}`, config);
+            await API.delete(`/api/workers/${id}`);
             fetchData();
         } catch (err) {
             console.error('Error deleting worker', err);
@@ -143,51 +140,97 @@ const Workers = () => {
 
             {error && <div className="error-banner"><AlertCircle size={18} /> {error}</div>}
 
-            <div className="table-view">
+            <div className="workers-content">
                 {loading ? (
                     <div className="loading">Loading workers...</div>
                 ) : (
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Worker Name</th>
-                                    <th>Contact</th>
-                                    <th>Specialization</th>
-                                    <th>Daily Wage</th>
-                                    <th>Site</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredWorkers.length === 0 ? (
-                                    <tr><td colSpan="7" className="empty-state">No workers matching your search</td></tr>
-                                ) : (
-                                    filteredWorkers.map(w => (
-                                        <tr key={w._id}>
-                                            <td style={{ fontWeight: 600 }}>{w.name}</td>
-                                            <td>{w.phone}</td>
-                                            <td><span className="badge-light">{w.specialization}</span></td>
-                                            <td>₹{w.dailyWage}</td>
-                                            <td>{w.site?.name || 'Unassigned'}</td>
-                                            <td>
-                                                <span className={`status-pill ${w.isActive ? 'active' : 'inactive'}`}>
-                                                    {w.isActive ? 'Active' : 'Inactive'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="actions">
-                                                    <button className="icon-btn edit" onClick={() => handleEdit(w)}><Edit2 size={16} /></button>
-                                                    <button className="icon-btn delete" onClick={() => handleDelete(w._id)}><Trash2 size={16} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="table-container desktop-only">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Worker Name</th>
+                                        <th>Contact</th>
+                                        <th>Specialization</th>
+                                        <th>Daily Wage</th>
+                                        <th>Site</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredWorkers.length === 0 ? (
+                                        <tr><td colSpan="7" className="empty-state">No workers matching your search</td></tr>
+                                    ) : (
+                                        filteredWorkers.map(w => (
+                                            <tr key={w._id}>
+                                                <td style={{ fontWeight: 600 }}>{w.name}</td>
+                                                <td>{w.phone}</td>
+                                                <td><span className="badge-light">{w.specialization}</span></td>
+                                                <td>₹{w.dailyWage}</td>
+                                                <td>{w.site?.name || 'Unassigned'}</td>
+                                                <td>
+                                                    <span className={`status-pill ${w.isActive ? 'active' : 'inactive'}`}>
+                                                        {w.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="actions">
+                                                        <button className="icon-btn edit" onClick={() => handleEdit(w)}><Edit2 size={16} /></button>
+                                                        <button className="icon-btn delete" onClick={() => handleDelete(w._id)}><Trash2 size={16} /></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="worker-cards mobile-only">
+                            {filteredWorkers.length === 0 ? (
+                                <div className="empty-state">No workers matching your search</div>
+                            ) : (
+                                filteredWorkers.map(w => (
+                                    <div key={w._id} className="worker-card glass-effect">
+                                        <div className="card-header">
+                                            <div className="worker-info">
+                                                <strong>{w.name}</strong>
+                                                <span className="worker-spec">{w.specialization}</span>
+                                            </div>
+                                            <span className={`status-pill ${w.isActive ? 'active' : 'inactive'}`}>
+                                                {w.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="info-item">
+                                                <span className="label">Contact:</span>
+                                                <span className="value">{w.phone}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <span className="label">Wage:</span>
+                                                <span className="value">₹{w.dailyWage}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <span className="label">Site:</span>
+                                                <span className="value">{w.site?.name || 'Unassigned'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="card-footer">
+                                            <button className="btn-card-action edit" onClick={() => handleEdit(w)}>
+                                                <Edit2 size={16} /> Edit
+                                            </button>
+                                            <button className="btn-card-action delete" onClick={() => handleDelete(w._id)}>
+                                                <Trash2 size={16} /> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -322,7 +365,39 @@ const Workers = () => {
                 .btn-outline { background: white; border: 1px solid #eee; color: #666; font-weight: 600; padding: 0.8rem 1.5rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
                 .btn-outline:hover { background: #f8f9fa; border-color: #ddd; }
 
-                @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .modal-content { padding: 1.5rem; margin: 1rem; } }
+                .desktop-only { display: block; }
+                .mobile-only { display: none; }
+
+                @media (max-width: 992px) { 
+                    .desktop-only { display: none; }
+                    .mobile-only { display: block; }
+
+                    .page-actions { flex-direction: column; padding: 1rem; gap: 1rem; align-items: stretch; }
+                    .search-bar { max-width: none; }
+                    .btn-primary { width: 100%; justify-content: center; padding: 1rem; }
+
+                    .worker-cards { display: flex; flex-direction: column; gap: 1rem; padding-bottom: 2rem; }
+                    .worker-card { padding: 1.2rem; border-radius: 20px; background: white; border: 1px solid #eee; display: flex; flex-direction: column; gap: 1rem; }
+                    
+                    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+                    .worker-info { display: flex; flex-direction: column; }
+                    .worker-info strong { font-size: 1.1rem; color: var(--primary); }
+                    .worker-spec { font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: 700; }
+                    
+                    .card-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #fcfcfc; border-radius: 12px; }
+                    .info-item { display: flex; justify-content: space-between; font-size: 0.9rem; }
+                    .info-item .label { color: #888; font-weight: 600; }
+                    .info-item .value { font-weight: 700; color: var(--text-main); }
+                    
+                    .card-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #f0f0f0; pt: 1rem; }
+                    .btn-card-action { padding: 10px; border-radius: 10px; border: 1px solid #eee; background: white; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+                    .btn-card-action.edit { color: #4facfe; border-color: #e1f0ff; }
+                    .btn-card-action.delete { color: #ff4d4f; border-color: #ffe6e6; }
+
+                    .form-grid { grid-template-columns: 1fr; gap: 1rem; } 
+                    .modal-content { padding: 1.5rem; margin: 1rem; border-radius: 20px; }
+                    .modal-header h3 { font-size: 1.2rem; }
+                }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 `
             }} />

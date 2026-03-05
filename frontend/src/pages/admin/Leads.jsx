@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import { Mail, Trash2, CheckCircle, Clock } from 'lucide-react';
 
 const Leads = () => {
@@ -12,10 +12,7 @@ const Leads = () => {
 
     const fetchLeads = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/contact', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await API.get('/api/contact');
             setLeads(res.data);
         } catch (err) {
             console.error('Error fetching leads:', err);
@@ -26,10 +23,7 @@ const Leads = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/contact/${id}`, { status }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await API.put(`/api/contact/${id}`, { status });
             fetchLeads();
         } catch (err) {
             console.error('Error updating status:', err);
@@ -39,10 +33,7 @@ const Leads = () => {
     const deleteLead = async (id) => {
         if (!window.confirm('Are you sure you want to delete this inquiry?')) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/contact/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await API.delete(`/api/contact/${id}`);
             fetchLeads();
         } catch (err) {
             console.error('Error deleting lead:', err);
@@ -53,7 +44,8 @@ const Leads = () => {
 
     return (
         <div className="leads-view">
-            <div className="table-container">
+            {/* Desktop Table View */}
+            <div className="table-container desktop-only">
                 <table>
                     <thead>
                         <tr>
@@ -99,9 +91,72 @@ const Leads = () => {
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="lead-cards mobile-only">
+                {leads.length === 0 ? (
+                    <div className="empty-state">No inquiries yet</div>
+                ) : (
+                    leads.map((lead) => (
+                        <div key={lead._id} className="lead-card glass-effect">
+                            <div className="card-header">
+                                <div className="lead-info">
+                                    <span className="lead-date">{new Date(lead.createdAt).toLocaleDateString()}</span>
+                                    <strong>{lead.name}</strong>
+                                </div>
+                                <span className={`status-badge ${lead.status.toLowerCase()}`}>
+                                    {lead.status}
+                                </span>
+                            </div>
+                            <div className="card-body">
+                                <a href={`mailto:${lead.email}`} className="email-link">
+                                    <Mail size={14} /> {lead.email}
+                                </a>
+                                <p className="lead-msg">{lead.message}</p>
+                            </div>
+                            <div className="card-footer">
+                                {lead.status === 'New' && (
+                                    <button className="btn-action-mobile success" onClick={() => updateStatus(lead._id, 'Read')}>
+                                        <CheckCircle size={18} /> Mark Read
+                                    </button>
+                                )}
+                                <button className="btn-action-mobile danger" onClick={() => deleteLead(lead._id)}>
+                                    <Trash2 size={18} /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
             <style dangerouslySetInnerHTML={{
                 __html: `
         .leads-view { padding: 1rem 0; }
+        .desktop-only { display: block; }
+        .mobile-only { display: none; }
+
+        @media (max-width: 992px) {
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+
+            .lead-cards { display: flex; flex-direction: column; gap: 1rem; padding: 0 1rem 2rem; }
+            .lead-card { padding: 1.2rem; border-radius: 20px; background: white; border: 1px solid #eee; display: flex; flex-direction: column; gap: 1rem; }
+            
+            .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+            .lead-info { display: flex; flex-direction: column; }
+            .lead-date { font-size: 0.75rem; color: #888; font-weight: 700; text-transform: uppercase; }
+            .lead-info strong { font-size: 1.1rem; color: var(--primary); }
+            
+            .card-body { display: flex; flex-direction: column; gap: 0.8rem; }
+            .lead-msg { font-size: 0.95rem; color: #444; line-height: 1.5; padding: 12px; background: #f9f9f9; border-radius: 12px; margin: 0; }
+            
+            .card-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #f0f0f0; padding-top: 1rem; }
+            .btn-action-mobile { padding: 10px; border-radius: 10px; border: 1px solid #eee; background: white; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+            .btn-action-mobile.success { color: #52c41a; border-color: #f6ffed; }
+            .btn-action-mobile.danger { color: #ff4d4f; border-color: #fff1f0; }
+
+            .empty-state { text-align: center; padding: 3rem; color: #888; font-weight: 500; }
+        }
+
         .email-link { display: flex; align-items: center; gap: 6px; color: var(--accent-hover); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
         .msg-preview { max-width: 300px; font-size: 0.9rem; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         

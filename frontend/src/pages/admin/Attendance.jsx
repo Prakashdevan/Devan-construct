@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from '../../utils/api';
 import { Calendar, UserCheck, Search, Filter, FileText, Trash2, XCircle, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -47,9 +47,7 @@ const Attendance = () => {
     useEffect(() => {
         const fetchSites = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/sites', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await API.get('/api/sites');
                 setSites(res.data);
             } catch (err) {
                 console.error('Error fetching sites', err);
@@ -67,9 +65,8 @@ const Attendance = () => {
     const fetchAttendance = async () => {
         setLoading(true);
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             // Fetch workers (backend default is now active only)
-            const workersRes = await axios.get(`http://localhost:5000/api/workers`, config);
+            const workersRes = await API.get(`/api/workers`);
             const siteWorkers = workersRes.data.map(w => ({
                 ...w,
                 _id: w._id.toString()
@@ -87,10 +84,10 @@ const Attendance = () => {
             // If 'all', we might need a global attendance fetch or just the site-specific one.
             // Let's assume we need an API that returns attendance for all workers on a date.
             const url = selectedSite === 'all'
-                ? `http://localhost:5000/api/attendance/all/${date}`
-                : `http://localhost:5000/api/attendance/${selectedSite}/${date}`;
+                ? `/api/attendance/all/${date}`
+                : `/api/attendance/${selectedSite}/${date}`;
 
-            const attendanceRes = await axios.get(url, config);
+            const attendanceRes = await API.get(url);
             const attendanceMap = {};
             attendanceRes.data.forEach(a => {
                 if (a.worker) {
@@ -123,12 +120,12 @@ const Attendance = () => {
             // Process updates
             for (const w of filteredWorkers) {
                 if (!attendance[w._id]?.isPaid) {
-                    await axios.post('http://localhost:5000/api/attendance', {
+                    await API.post('/api/attendance', {
                         worker: w._id,
                         site: w.site?._id || selectedSite,
                         date: date,
                         status: status
-                    }, { headers: { Authorization: `Bearer ${token}` } });
+                    });
                 }
             }
         } catch (err) {
@@ -162,16 +159,15 @@ const Attendance = () => {
         });
 
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             if (isClearing) {
-                await axios.delete(`http://localhost:5000/api/attendance/${idStr}/${date}`, config);
+                await API.delete(`/api/attendance/${idStr}/${date}`);
             } else {
-                await axios.post('http://localhost:5000/api/attendance', {
+                await API.post('/api/attendance', {
                     worker: idStr,
                     site: siteId,
                     date: date,
                     status: status
-                }, config);
+                });
             }
             // CRITICAL: Re-fetch from DB to confirm persistence
             fetchAttendance();
@@ -255,7 +251,8 @@ const Attendance = () => {
                 </div>
             </div>
 
-            <div className="attendance-table table-container">
+            {/* Desktop Table View */}
+            <div className="attendance-table-container desktop-only">
                 <table>
                     <thead>
                         <tr>
@@ -361,6 +358,82 @@ const Attendance = () => {
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="attendance-cards mobile-only">
+                <div className="mobile-bulk-actions">
+                    <button onClick={() => handleBulkMark('Present')} className="btn-bulk present">Mark All P</button>
+                    <button onClick={() => handleBulkMark('Half-day')} className="btn-bulk half">Mark All H</button>
+                    <button onClick={() => handleBulkMark('Absent')} className="btn-bulk absent">Mark All A</button>
+                </div>
+
+                {filteredWorkers.map(w => (
+                    <div key={w._id} className="worker-card glass-effect">
+                        <div className="card-header">
+                            <div className="worker-main">
+                                <strong>{w.name}</strong>
+                                <span className="worker-spec">{w.specialization}</span>
+                            </div>
+                            <span className={`status-badge ${attendance[w._id]?.status?.toLowerCase() || 'unmarked'}`}>
+                                {attendance[w._id]?.status || 'Unmarked'}
+                            </span>
+                        </div>
+
+                        <div className="card-body">
+                            <div className="info-row">
+                                <span className="info-label">Site:</span>
+                                {w.site?.name ? (
+                                    <span className="badge-site">{w.site.name}</span>
+                                ) : (
+                                    <span className="badge-warning">⚠️ No Site</span>
+                                )}
+                            </div>
+                            {attendance[w._id]?.status && attendance[w._id]?.status !== 'Absent' && (
+                                <div className="info-row">
+                                    <span className="info-label">Earned:</span>
+                                    <span className="wage-earned">
+                                        ₹{attendance[w._id]?.status === 'One-and-half' ? w.dailyWage * 1.5 : (attendance[w._id]?.status === 'Present' ? w.dailyWage : w.dailyWage / 2)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="card-actions">
+                            <div className="status-btns">
+                                <button
+                                    onClick={() => handleStatusChange(w._id, 'Present', w.site?._id)}
+                                    className={`btn-status present ${attendance[w._id]?.status === 'Present' ? 'active' : ''}`}
+                                >P</button>
+                                <button
+                                    onClick={() => handleStatusChange(w._id, 'Half-day', w.site?._id)}
+                                    className={`btn-status half ${attendance[w._id]?.status === 'Half-day' ? 'active' : ''}`}
+                                >H</button>
+                                <button
+                                    onClick={() => handleStatusChange(w._id, 'One-and-half', w.site?._id)}
+                                    className={`btn-status one-half ${attendance[w._id]?.status === 'One-and-half' ? 'active' : ''}`}
+                                >1.5</button>
+                                <button
+                                    onClick={() => handleStatusChange(w._id, 'Absent', w.site?._id)}
+                                    className={`btn-status absent ${attendance[w._id]?.status === 'Absent' ? 'active' : ''}`}
+                                >A</button>
+                                {attendance[w._id]?.status && (
+                                    <button
+                                        className="btn-status clear"
+                                        onClick={() => handleStatusChange(w._id, attendance[w._id].status, w.site?._id)}
+                                    ><XCircle size={18} /></button>
+                                )}
+                            </div>
+
+                            {attendance[w._id]?.status && !attendance[w._id]?.isPaid && (
+                                <div className="notify-btns">
+                                    <button onClick={() => sendWhatsAppNotification(w, attendance[w._id].status, w.site?.name)} className="btn-notify-wa">WhatsApp</button>
+                                    <button onClick={() => sendSMSNotification(w, attendance[w._id].status, w.site?.name)} className="btn-notify-sms">SMS</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             <style dangerouslySetInnerHTML={{
                 __html: `
         .attendance-filters { display: flex; gap: 2rem; padding: 1.5rem 2rem; border-radius: 20px; margin-bottom: 2rem; align-items: flex-end; }
@@ -448,6 +521,114 @@ const Attendance = () => {
         .btn-notify-sms:hover {
             background: #0076ad;
             transform: scale(1.05);
+        }
+
+        .desktop-only { display: block; }
+        .mobile-only { display: none; }
+
+        @media (max-width: 992px) {
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+            
+            .attendance-filters {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+                align-items: stretch;
+            }
+            .filter-group { width: 100%; }
+            
+            /* Mobile Card Styling */
+            .attendance-cards {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                padding-bottom: 2rem;
+            }
+            .mobile-bulk-actions {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                margin-bottom: 0.5rem;
+            }
+            .worker-card {
+                padding: 1.2rem;
+                border-radius: 20px;
+                background: white;
+                border: 1px solid #eee;
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+            .worker-main {
+                display: flex;
+                flex-direction: column;
+            }
+            .worker-main strong { font-size: 1.1rem; color: var(--primary); }
+            .worker-spec { font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: 700; }
+            
+            .card-body {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                padding: 10px;
+                background: #fcfcfc;
+                border-radius: 12px;
+            }
+            .info-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.9rem;
+            }
+            .info-label { color: #888; font-weight: 600; }
+            
+            .card-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .status-btns {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+            }
+            .btn-status {
+                height: 44px;
+                border-radius: 10px;
+                border: 1px solid #eee;
+                background: white;
+                font-weight: 800;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+            .btn-status.present.active { background: #33d391; color: white; border-color: #33d391; }
+            .btn-status.half.active { background: #ffb400; color: white; border-color: #ffb400; }
+            .btn-status.one-half.active { background: #8e44ad; color: white; border-color: #8e44ad; }
+            .btn-status.absent.active { background: #ff4d4f; color: white; border-color: #ff4d4f; }
+            .btn-status.clear { color: #ff4d4f; border-color: #ffe6e6; }
+            
+            .notify-btns {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .notify-btns button {
+                padding: 10px;
+                border-radius: 10px;
+                font-size: 0.8rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                border: none;
+                color: white;
+            }
         }
       `}} />
         </div>

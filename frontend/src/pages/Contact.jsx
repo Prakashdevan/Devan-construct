@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -23,7 +23,7 @@ const Contact = () => {
         setStatus({ type: '', message: '' });
 
         try {
-            await axios.post('http://localhost:5000/api/contact', formData);
+            await API.post('/api/contact', formData);
             setStatus({ type: 'success', message: t('contact.success') });
             setFormData({ name: '', email: '', message: '' });
         } catch (err) {
