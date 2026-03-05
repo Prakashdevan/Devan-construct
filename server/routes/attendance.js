@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Attendance = require('../models/Attendance');
-const Attendance = require('../models/Attendance');
 
 // @route   POST api/attendance
 // @desc    Mark attendance for a worker

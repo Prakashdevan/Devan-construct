@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Worker = require('../models/Worker');
-const Worker = require('../models/Worker');
 
 // @route   GET api/workers
 // @desc    Get all workers

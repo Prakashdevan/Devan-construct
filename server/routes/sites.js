@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Site = require('../models/Site');
-const Site = require('../models/Site');
 
 // @route   GET api/sites
 router.get('/', async (req, res) => {
