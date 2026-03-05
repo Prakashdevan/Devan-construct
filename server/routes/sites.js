@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Site = require('../models/Site');
-const auth = require('../middleware/auth');
+const Site = require('../models/Site');
 
 // @route   GET api/sites
-router.get('/', auth(), async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const sites = await Site.find();
         res.json(sites);
@@ -14,7 +14,7 @@ router.get('/', auth(), async (req, res) => {
 });
 
 // @route   POST api/sites
-router.post('/', auth(['super-admin', 'admin']), async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const newSite = new Site(req.body);
         const site = await newSite.save();
@@ -25,7 +25,7 @@ router.post('/', auth(['super-admin', 'admin']), async (req, res) => {
 });
 
 // @route   PUT api/sites/:id
-router.put('/:id', auth(['super-admin', 'admin']), async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const site = await Site.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!site) return res.status(404).json({ message: 'Site not found' });
@@ -36,7 +36,7 @@ router.put('/:id', auth(['super-admin', 'admin']), async (req, res) => {
 });
 
 // @route   DELETE api/sites/:id
-router.delete('/:id', auth(['super-admin', 'admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
     console.log(`DELETE request for site ${req.params.id} by user role: ${req.user.role}`);
     try {
         const site = await Site.findByIdAndDelete(req.params.id);

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute'; // New import
 import Home from './pages/Home';
 import CenteringMaterials from './pages/CenteringMaterials';
 import Gallery from './pages/Gallery';
@@ -21,8 +22,15 @@ const AppContent = () => {
                     <Route path="/centering-materials" element={<CenteringMaterials />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/admin/*" element={<Dashboard />} />
+                    <Route path="/admin-login" element={<Login />} />
+                    <Route
+                        path="/admin/*"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Routes>
             </main>
         </div>

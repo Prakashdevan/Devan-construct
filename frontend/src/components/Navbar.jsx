@@ -124,7 +124,7 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link to="/login" className="btn btn-primary login-btn">
+          <Link to="/admin-login" className="btn btn-primary login-btn">
             {t('nav.admin')}
           </Link>
         </div>
@@ -166,7 +166,7 @@ const Navbar = () => {
           <NavLink to="/centering-materials" onClick={() => setIsOpen(false)}>{t('nav.materials')}</NavLink>
           <NavLink to="/gallery" onClick={() => setIsOpen(false)}>{t('nav.gallery')}</NavLink>
           <NavLink to="/contact" onClick={() => setIsOpen(false)}>{t('nav.contact')}</NavLink>
-          <NavLink to="/login" onClick={() => setIsOpen(false)} className="mobile-login-btn">{t('nav.admin')}</NavLink>
+          <NavLink to="/admin-login" onClick={() => setIsOpen(false)} className="mobile-login-btn">{t('nav.admin')}</NavLink>
 
           <div className="mobile-lang-section">
             <p className="mobile-lang-title">{t('common.language') || 'Language'}</p>

@@ -214,7 +214,7 @@ const Sites = () => {
                 .form-group input, .form-group select { padding: 0.9rem; border-radius: 12px; border: 1px solid #eee; }
                 .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
                 
-                @media (max-width: 992px) {
+                @media (max-width: 900px) {
                     .page-actions { justify-content: stretch; padding: 1rem; }
                     .btn-primary { width: 100%; justify-content: center; padding: 1rem; }
                     .sites-grid { grid-template-columns: 1fr; padding: 0 1rem 2rem; }

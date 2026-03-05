@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Worker = require('../models/Worker');
-const auth = require('../middleware/auth');
+const Worker = require('../models/Worker');
 
 // @route   GET api/workers
 // @desc    Get all workers
-router.get('/', auth(), async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const query = req.query.all === 'true' ? {} : { isActive: { $ne: false } };
         const workers = await Worker.find(query).populate('site', 'name location');
@@ -17,7 +17,7 @@ router.get('/', auth(), async (req, res) => {
 
 // @route   POST api/workers
 // @desc    Create a worker
-router.post('/', auth(['super-admin', 'admin']), async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const newWorker = new Worker(req.body);
         const worker = await newWorker.save();
@@ -29,7 +29,7 @@ router.post('/', auth(['super-admin', 'admin']), async (req, res) => {
 
 // @route   PUT api/workers/:id
 // @desc    Update a worker
-router.put('/:id', auth(['super-admin', 'admin']), async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const worker = await Worker.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(worker);
@@ -40,7 +40,7 @@ router.put('/:id', auth(['super-admin', 'admin']), async (req, res) => {
 
 // @route   DELETE api/workers/:id
 // @desc    Delete a worker
-router.delete('/:id', auth(['super-admin', 'admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         await Worker.findByIdAndDelete(req.params.id);
         res.json({ message: 'Worker removed' });
@@ -51,7 +51,7 @@ router.delete('/:id', auth(['super-admin', 'admin']), async (req, res) => {
 
 // @route   GET api/workers/stats/specialization
 // @desc    Get worker counts by specialization
-router.get('/stats/specialization', auth(), async (req, res) => {
+router.get('/stats/specialization', async (req, res) => {
     try {
         const stats = await Worker.aggregate([
             { $match: { isActive: { $ne: false } } },

@@ -35,13 +35,14 @@ router.get('/', async (req, res) => {
 
 // @route   POST api/gallery/upload
 // @desc    Upload an image
-router.post('/upload', auth(), upload.single('image'), async (req, res) => {
+router.post('/upload', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
         const newImage = new Gallery({
             title: req.body.title || 'Work Progress',
-            url: `http://localhost:5000/uploads/gallery/${req.file.filename}`,
+            url: `${baseUrl}/uploads/gallery/${req.file.filename}`,
             uploadedBy: req.user.id
         });
 
@@ -54,7 +55,7 @@ router.post('/upload', auth(), upload.single('image'), async (req, res) => {
 
 // @route   DELETE api/gallery/:id
 // @desc    Delete an image
-router.delete('/:id', auth(), async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const image = await Gallery.findById(req.params.id);
         if (!image) return res.status(404).json({ message: 'Image not found' });

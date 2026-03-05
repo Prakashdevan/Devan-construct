@@ -31,7 +31,7 @@ const Dashboard = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/admin-login');
     };
 
     const sidebarItems = [
@@ -162,7 +162,7 @@ const Dashboard = () => {
         .view-container { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 992px) {
+        @media (max-width: 900px) {
           .sidebar { width: 80px; padding: 1rem 0.5rem; align-items: center; }
           .sidebar-header span, .nav-item span, .user-meta, .logout-btn span { display: none; }
           .dashboard-content { margin-left: 80px; padding: 1.5rem; }

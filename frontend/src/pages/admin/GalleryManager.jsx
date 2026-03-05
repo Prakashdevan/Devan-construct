@@ -145,7 +145,7 @@ const GalleryManager = () => {
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        @media (max-width: 992px) {
+        @media (max-width: 900px) {
             .upload-section { padding: 2rem 1rem; border-radius: 20px; margin: 1rem; }
             .form-inputs { max-width: none; width: 100%; }
             .gallery-admin-grid { grid-template-columns: 1fr; padding: 0 1rem 2rem; }

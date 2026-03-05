@@ -9,12 +9,25 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            // Token is handled by API interceptor in utils/api.js
-            const savedUser = JSON.parse(localStorage.getItem('user'));
-            if (savedUser) setUser(savedUser);
-        }
-        setLoading(false);
+        const initializeAuth = () => {
+            if (token) {
+                try {
+                    const savedUser = localStorage.getItem('user');
+                    if (savedUser && savedUser !== 'undefined') {
+                        setUser(JSON.parse(savedUser));
+                    }
+                } catch (err) {
+                    console.error('Auth initialization error:', err);
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    setToken(null);
+                    setUser(null);
+                }
+            }
+            setLoading(false);
+        };
+
+        initializeAuth();
     }, [token]);
 
     const login = async (email, password) => {

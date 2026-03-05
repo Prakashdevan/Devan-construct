@@ -368,7 +368,7 @@ const Workers = () => {
                 .desktop-only { display: block; }
                 .mobile-only { display: none; }
 
-                @media (max-width: 992px) { 
+                @media (max-width: 900px) { 
                     .desktop-only { display: none; }
                     .mobile-only { display: block; }
 

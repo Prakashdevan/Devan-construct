@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Attendance = require('../models/Attendance');
-const auth = require('../middleware/auth');
+const Attendance = require('../models/Attendance');
 
 // @route   POST api/attendance
 // @desc    Mark attendance for a worker
-router.post('/', auth(), async (req, res) => {
+router.post('/', async (req, res) => {
     console.log('--- ATTEMPTING ATTENDANCE MARK ---', req.body);
     const { worker, site, date, status, remarks } = req.body;
     try {
@@ -38,7 +38,7 @@ router.post('/', auth(), async (req, res) => {
 
 // @route   GET api/attendance/all/:date
 // @desc    Get attendance for all workers on a specific date
-router.get('/all/:date', auth(), async (req, res) => {
+router.get('/all/:date', async (req, res) => {
     try {
         const queryDate = new Date(req.params.date);
         queryDate.setUTCHours(0, 0, 0, 0);
@@ -58,7 +58,7 @@ router.get('/all/:date', auth(), async (req, res) => {
 
 // @route   GET api/attendance/:siteId/:date
 // @desc    Get attendance for a site on a specific date
-router.get('/:siteId/:date', auth(), async (req, res) => {
+router.get('/:siteId/:date', async (req, res) => {
     try {
         const queryDate = new Date(req.params.date);
         queryDate.setUTCHours(0, 0, 0, 0);
@@ -77,7 +77,7 @@ router.get('/:siteId/:date', auth(), async (req, res) => {
 
 // @route   GET api/attendance/stats
 // @desc    Get attendance stats for the last 7 days
-router.get('/stats', auth(), async (req, res) => {
+router.get('/stats', async (req, res) => {
     try {
         const today = new Date();
         // Set range from 7 days ago to 2 days in the future to capture all recent marks
@@ -138,7 +138,7 @@ router.get('/stats', auth(), async (req, res) => {
 
 // @route   GET api/attendance/daily-expense
 // @desc    Get total wage expense for a specific date
-router.get('/daily-expense', auth(), async (req, res) => {
+router.get('/daily-expense', async (req, res) => {
     const { date } = req.query;
     let queryDate;
     if (date) {
@@ -190,7 +190,7 @@ router.get('/daily-expense', auth(), async (req, res) => {
 
 // @route   GET api/attendance/worker-salary
 // @desc    Get salary report for all workers (filters by payment status)
-router.get('/worker-salary', auth(), async (req, res) => {
+router.get('/worker-salary', async (req, res) => {
     const { payoutDate } = req.query;
 
     let query = { isPaid: { $ne: true } }; // Default: ALL unpaid records
@@ -253,7 +253,7 @@ router.get('/worker-salary', auth(), async (req, res) => {
 
 // @route   POST api/attendance/reset
 // @desc    Confirm payment and reset for new cycle
-router.post('/reset', auth(), async (req, res) => {
+router.post('/reset', async (req, res) => {
     const { password } = req.body;
     const User = require('../models/User');
 
@@ -280,7 +280,7 @@ router.post('/reset', auth(), async (req, res) => {
 
 // @route   GET api/attendance/payouts
 // @desc    Get all unique payout dates for history
-router.get('/payouts', auth(), async (req, res) => {
+router.get('/payouts', async (req, res) => {
     try {
         const payouts = await Attendance.distinct('payoutDate', { isPaid: true });
         res.json(payouts.filter(d => d).sort((a, b) => b - a));
@@ -332,7 +332,7 @@ router.get('/salary/:workerId', async (req, res) => {
 
 // @route   GET api/attendance/day-details/:date
 // @desc    Get names of workers present on a specific date
-router.get('/day-details/:date', auth(), async (req, res) => {
+router.get('/day-details/:date', async (req, res) => {
     console.log('Day Details request for date:', req.params.date);
     try {
         const queryDate = new Date(req.params.date);
@@ -363,7 +363,7 @@ router.get('/day-details/:date', auth(), async (req, res) => {
 
 // @route   DELETE api/attendance/:workerId/:date
 // @desc    Clear attendance for a worker on a specific date (un-mark)
-router.delete('/:workerId/:date', auth(), async (req, res) => {
+router.delete('/:workerId/:date', async (req, res) => {
     console.log('--- ATTEMPTING ATTENDANCE DELETE ---', req.params);
     try {
         const queryDate = new Date(req.params.date);
@@ -386,7 +386,7 @@ router.delete('/:workerId/:date', auth(), async (req, res) => {
 
 // @route   DELETE api/attendance/bulk-clear
 // @desc    Clear attendance for all workers on a site for a specific date
-router.delete('/bulk-clear', auth(), async (req, res) => {
+router.delete('/bulk-clear', async (req, res) => {
     const { siteId, date } = req.query;
     try {
         const queryDate = new Date(date);
@@ -413,7 +413,7 @@ router.delete('/bulk-clear', auth(), async (req, res) => {
 
 // @route   POST api/attendance/notify
 // @desc    Send direct notification via SMS or WhatsApp
-router.post('/notify', auth(), async (req, res) => {
+router.post('/notify', async (req, res) => {
     const { workerId, method, message } = req.body;
     const Worker = require('../models/Worker');
     const { sendSMS, sendWhatsApp } = require('../utils/messaging');
