@@ -11,15 +11,13 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, user } = useAuth();
+    const { login, logout, user } = useAuth();
     const navigate = useNavigate();
 
-    // Redirect if already logged in
+    // Clear session whenever landing on the login page to force a fresh login
     React.useEffect(() => {
-        if (user) {
-            navigate('/admin');
-        }
-    }, [user, navigate]);
+        logout();
+    }, []); // Run only once on mount
 
     const handleSubmit = async (e) => {
         e.preventDefault();
